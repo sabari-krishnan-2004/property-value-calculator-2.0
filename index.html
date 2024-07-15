@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Value Calculator</title>
+    <link rel="manifest" href="/manifest.json">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            width: 50%;
+            margin: auto;
+            margin-top: 50px;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .header {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            margin-left: 10px;
+        }
+        img {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #555;
+            text-align: left;
+        }
+        input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #results {
+            margin-top: 20px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="block.png" alt="Property Value Calculator Image">
+            <h1>Property Value Calculator</h1>
+        </div>
+        
+        <form id="propertyForm" onsubmit="calculatePropertyValues(event)">
+            <label for="clientName">Client Name</label>
+            <input type="text" id="clientName" name="clientName" required>
+
+            <label for="landRate">Land Rate per Cent</label>
+            <input type="text" id="landRate" name="landRate" required>
+
+            <label for="landArea">Land Area in Ares</label>
+            <input type="text" id="landArea" name="landArea" required>
+
+            <label for="buildingArea">Building Area in Sq m</label>
+            <input type="text" id="buildingArea" name="buildingArea" required>
+
+            <label for="buildingRate">Building Rate per Square Feet</label>
+            <input type="text" id="buildingRate" name="buildingRate" required>
+
+            <label for="buildingAge">Age of the Building in Years</label>
+            <input type="text" id="buildingAge" name="buildingAge" required>
+
+            <label for="depreciationRate">Depreciation Rate (as a decimal, e.g., 0.9 for 90%)</label>
+            <input type="text" id="depreciationRate" name="depreciationRate" required>
+
+            <label for="realisableValuePercentage">Realisable Value Percentage (as a decimal, e.g., 0.9 for 90%)</label>
+            <input type="text" id="realisableValuePercentage" name="realisableValuePercentage" required>
+
+            <label for="forcedSaleValuePercentage">Forced Sale Value Percentage (as a decimal, e.g., 0.8 for 80%)</label>
+            <input type="text" id="forcedSaleValuePercentage" name="forcedSaleValuePercentage" required>
+
+            <button type="submit">Calculate</button>
+        </form>
+        <div id="results" style="display: none;">
+            <h2>Results:</h2>
+            <p><strong>Land Value:</strong> <span id="landValue"></span></p>
+            <p><strong>Building Value:</strong> <span id="buildingValue"></span></p>
+            <p><strong>Current Building Value:</strong> <span id="currentBuildingValue"></span></p>
+            <p><strong>Estimated Market Value:</strong> <span id="marketValue"></span></p>
+            <p><strong>Estimated Realisable Value:</strong> <span id="realisableValue"></span></p>
+            <p><strong>Estimated Forced Sale Value:</strong> <span id="forcedSaleValue"></span></p>
+            <button onclick="generatePDF()">Download PDF</button>
+        </div>
+    </div>
+
+    <!-- Include jsPDF and autoTable plugin via CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.18/jspdf.plugin.autotable.min.js"></script>
+
+    <script>
+        function calculatePropertyValues(event) {
+            event.preventDefault();
+
+            let landRate = parseFloat(document.getElementById('landRate').value);
+            let landArea = parseFloat(document.getElementById('landArea').value);
+            let buildingAreaSqM = parseFloat(document.getElementById('buildingArea').value);
+            let buildingRatePerSqFt = parseFloat(document.getElementById('buildingRate').value);
+            let buildingAge = parseFloat(document.getElementById('buildingAge').value);
+            let depreciationRate = parseFloat(document.getElementById('depreciationRate').value);
+            let realisableValuePercentage = parseFloat(document.getElementById('realisableValuePercentage').value);
+            let forcedSaleValuePercentage = parseFloat(document.getElementById('forcedSaleValuePercentage').value);
+
+            let landAreaCents = landArea * 2.471;
+
+            let landValue = landRate * landAreaCents;
+
+            let buildingAreaSqFt = buildingAreaSqM * 10.7639;
+
+            let buildingValue = buildingRatePerSqFt * buildingAreaSqFt;
+
+           
+            let currentBuildingValue = (depreciationRate * (60 - buildingAge) / 60) * buildingValue;
+
+            let marketValue = landValue + currentBuildingValue;
+            let realisableValue = realisableValuePercentage * marketValue;
+            let forcedSaleValue = forcedSaleValuePercentage * marketValue;
+
+            function formatCurrency(value) {
+                return 'Rs ' + Math.floor(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            }
+
+            document.getElementById('landValue').textContent = formatCurrency(landValue);
+            document.getElementById('buildingValue').textContent = formatCurrency(buildingValue);
+            document.getElementById('currentBuildingValue').textContent = formatCurrency(currentBuildingValue);
+            document.getElementById('marketValue').textContent = formatCurrency(marketValue);
+            document.getElementById('realisableValue').textContent = formatCurrency(realisableValue);
+            document.getElementById('forcedSaleValue').textContent = formatCurrency(forcedSaleValue);
+
+            document.getElementById('results').style.display = 'block';
+        }
+
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const clientName = document.getElementById('clientName').value;
+            const date = new Date().toLocaleDateString();
+
+            let landRate = parseFloat(document.getElementById('landRate').value);
+            let landArea = parseFloat(document.getElementById('landArea').value);
+            let buildingAreaSqM = parseFloat(document.getElementById('buildingArea').value);
+            let buildingRatePerSqFt = parseFloat(document.getElementById('buildingRate').value);
+            let buildingAge = parseFloat(document.getElementById('buildingAge').value);
+            let depreciationRate = parseFloat(document.getElementById('depreciationRate').value);
+            let realisableValuePercentage = parseFloat(document.getElementById('realisableValuePercentage').value);
+            let forcedSaleValuePercentage = parseFloat(document.getElementById('forcedSaleValuePercentage').value);
+
+            let landAreaCents = landArea * 2.471;
+            let landValue = landRate * landAreaCents;
+            let buildingAreaSqFt = buildingAreaSqM * 10.7639;
+            let buildingValue = buildingRatePerSqFt * buildingAreaSqFt;
+            
+            let currentBuildingValue = (depreciationRate * (60 - buildingAge) / 60) * buildingValue;
+            let marketValue = landValue + currentBuildingValue;
+            let realisableValue = realisableValuePercentage * marketValue;
+            let forcedSaleValue = forcedSaleValuePercentage * marketValue;
+
+            doc.setProperties({
+                title: 'Property Value Report',
+                subject: 'Generated Report',
+                author: clientName,
+                keywords: 'property value, report, calculation',
+                creator: 'Property Value Calculator'
+            });
+
+            doc.setLineWidth(1);
+            doc.rect(10, 10, 190, 277);
+
+            const data = [
+                ['Property', 'Value'],
+                ['Land Extent (in cents)', landAreaCents.toFixed(2)+' cents'],
+                ['Land Rate per Cent', 'Rs ' + landRate.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")],
+                ['Land Value', 'Rs ' + Math.floor(landValue).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")],
+                ['Building Area (in sq ft)', buildingAreaSqFt.toFixed(2)+' sq ft'],
+                ['Building Rate per Sq Ft', 'Rs ' + buildingRatePerSqFt.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")],
+                ['Depreciation Rate', (depreciationRate * 100).toFixed(2) + '%'],
+                ['Building Value', 'Rs ' + Math.floor(buildingValue).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") ],
+                ['Market Value', 'Rs ' + Math.floor(marketValue).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")],
+                ['Realisable Value', 'Rs ' + Math.floor(realisableValue).toString().replace(/\B(?=(\d{3})+(?!d))/g, ",") + ' (' + (realisableValuePercentage * 100).toFixed(2) + '%)'],
+                ['Forced Sale Value', 'Rs ' + Math.floor(forcedSaleValue).toString().replace(/\B(?=(\d{3})+(?!d))/g, ",") + ' (' + (forcedSaleValuePercentage * 100).toFixed(2) + '%)']
+            ];
+
+            doc.setFontSize(18);
+            doc.text('Property Value Report', 105, 30, null, null, 'center');
+            doc.setFontSize(12);
+            doc.text(`Client: ${clientName}`, 14, 50);
+            
+
+            doc.autoTable({
+                startY: 70,
+                head: [data[0]],
+                body: data.slice(1),
+                styles: { fontSize: 12 },
+                headStyles: { fillColor: [22, 160, 133] },
+            });
+
+            doc.save(`${date}_${clientName}_property_value_report.pdf`);
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js').then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
