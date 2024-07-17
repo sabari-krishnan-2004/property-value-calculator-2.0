@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,6 +14,7 @@
             padding: 0;
             background-color: #f0f0f0;
         }
+
         .container {
             width: 50%;
             margin: auto;
@@ -22,6 +24,7 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
+
         .header {
             display: flex;
             flex-direction: row;
@@ -29,21 +32,25 @@
             justify-content: center;
             margin-bottom: 20px;
         }
+
         h1 {
             color: #333;
             margin-left: 10px;
         }
+
         img {
             width: 60px;
             height: 60px;
             margin-bottom: 20px;
         }
+
         label {
             display: block;
             margin-bottom: 10px;
             color: #555;
             text-align: left;
         }
+
         input[type="text"] {
             width: calc(100% - 22px);
             padding: 10px;
@@ -51,6 +58,7 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
+
         button {
             width: 100%;
             padding: 10px;
@@ -61,22 +69,25 @@
             cursor: pointer;
             font-size: 16px;
         }
+
         button:hover {
             background-color: #218838;
         }
+
         #results {
             margin-top: 20px;
             text-align: left;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
             <img src="block.png" alt="Property Value Calculator Image">
             <h1>Property Value Calculator</h1>
         </div>
-        
+
         <form id="propertyForm" onsubmit="calculatePropertyValues(event)">
             <label for="clientName">Client Name</label>
             <input type="text" id="clientName" name="clientName" required>
@@ -119,11 +130,25 @@
         </div>
     </div>
 
-    <!-- Include jsPDF and autoTable plugin via CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.18/jspdf.plugin.autotable.min.js"></script>
 
     <script>
+        function formatCurrency(value) {
+            let x = Math.round(value).toString();
+            if (x.length <= 3) return 'Rs ' + x;
+
+            let lastThreeDigits = x.slice(-3);
+            let otherDigits = x.slice(0, -3);
+            
+            if (otherDigits) {
+                lastThreeDigits = ',' + lastThreeDigits;
+            }
+            
+            let formattedValue = otherDigits.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + lastThreeDigits;
+            return 'Rs ' + formattedValue;
+        }
+
         function calculatePropertyValues(event) {
             event.preventDefault();
 
@@ -137,23 +162,13 @@
             let forcedSaleValuePercentage = parseFloat(document.getElementById('forcedSaleValuePercentage').value);
 
             let landAreaCents = landArea * 2.471;
-
             let landValue = landRate * landAreaCents;
-
             let buildingAreaSqFt = buildingAreaSqM * 10.7639;
-
             let buildingValue = buildingRatePerSqFt * buildingAreaSqFt;
-
-           
             let currentBuildingValue = (depreciationRate * (60 - buildingAge) / 60) * buildingValue;
-
             let marketValue = landValue + currentBuildingValue;
             let realisableValue = realisableValuePercentage * marketValue;
             let forcedSaleValue = forcedSaleValuePercentage * marketValue;
-
-            function formatCurrency(value) {
-                return 'Rs ' + Math.floor(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-            }
 
             document.getElementById('landValue').textContent = formatCurrency(landValue);
             document.getElementById('buildingValue').textContent = formatCurrency(buildingValue);
@@ -185,45 +200,30 @@
             let landValue = landRate * landAreaCents;
             let buildingAreaSqFt = buildingAreaSqM * 10.7639;
             let buildingValue = buildingRatePerSqFt * buildingAreaSqFt;
-            
             let currentBuildingValue = (depreciationRate * (60 - buildingAge) / 60) * buildingValue;
             let marketValue = landValue + currentBuildingValue;
             let realisableValue = realisableValuePercentage * marketValue;
             let forcedSaleValue = forcedSaleValuePercentage * marketValue;
 
-            doc.setProperties({
-                title: 'Property Value Report',
-                subject: 'Generated Report',
-                author: clientName,
-                keywords: 'property value, report, calculation',
-                creator: 'Property Value Calculator'
-            });
-
-            doc.setLineWidth(1);
-            doc.rect(10, 10, 190, 277);
-
             const data = [
                 ['Property', 'Value'],
-                ['Land Extent (in cents)', landAreaCents.toFixed(2)+' cents'],
-                ['Land Rate per Cent', 'Rs ' + landRate.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")],
-                ['Land Value', 'Rs ' + Math.floor(landValue).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")],
-                ['Building Area (in sq ft)', buildingAreaSqFt.toFixed(2)+' sq ft'],
-                ['Building Rate per Sq Ft', 'Rs ' + buildingRatePerSqFt.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")],
-                ['Depreciation Rate', (depreciationRate * 100).toFixed(2) + '%'],
-                ['Building Value', 'Rs ' + Math.floor(buildingValue).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") ],
-                ['Market Value', 'Rs ' + Math.floor(marketValue).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")],
-                ['Realisable Value', 'Rs ' + Math.floor(realisableValue).toString().replace(/\B(?=(\d{3})+(?!d))/g, ",") + ' (' + (realisableValuePercentage * 100).toFixed(2) + '%)'],
-                ['Forced Sale Value', 'Rs ' + Math.floor(forcedSaleValue).toString().replace(/\B(?=(\d{3})+(?!d))/g, ",") + ' (' + (forcedSaleValuePercentage * 100).toFixed(2) + '%)']
+                ['Land Extents (in cents)', landAreaCents.toFixed(2) + ' cents'],
+                ['Land Rate per Cent', formatCurrency(landRate)],
+                ['Land Value', formatCurrency(Math.floor(landValue))],
+                ['Building Area (in sq ft)', buildingAreaSqFt.toFixed(2) + ' sq ft'],
+                ['Building Rate per Sq Ft', formatCurrency(buildingRatePerSqFt)],
+              
+                ['Building Value', formatCurrency(Math.floor(buildingValue))],
+                ['Market Value', formatCurrency(Math.floor(marketValue))],
+                ['Realisable Value', formatCurrency(Math.floor(realisableValue)) + ' (' + (realisableValuePercentage * 100).toFixed(2) + '%)'],
+                ['Forced Sale Value', formatCurrency(Math.floor(forcedSaleValue)) + ' (' + (forcedSaleValuePercentage * 100).toFixed(2) + '%)']
             ];
 
-            doc.setFontSize(18);
-            doc.text('Property Value Report', 105, 30, null, null, 'center');
-            doc.setFontSize(12);
-            doc.text(`Client: ${clientName}`, 14, 50);
+            doc.text(`Property Value Report for ${clientName}`, 105, 30,null,null,'center');
             
 
             doc.autoTable({
-                startY: 70,
+                startY: 40,
                 head: [data[0]],
                 body: data.slice(1),
                 styles: { fontSize: 12 },
@@ -232,16 +232,9 @@
 
             doc.save(`${date}_${clientName}_property_value_report.pdf`);
         }
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js').then(registration => {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                }, err => {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
-            });
-        }
     </script>
 </body>
+
 </html>
+
+
